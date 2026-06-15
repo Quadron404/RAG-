@@ -1,0 +1,11 @@
+name            = "rag-genesis"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+# ── D1 Database binding ──────────────────────────────────────────────
+# After running `wrangler d1 create rag-genesis-db`, paste the
+# generated database_id below (replace the placeholder).
+[[d1_databases]]
+binding      = "RAG_DB"
+database_name = "rag-genesis-db"
+database_id  = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
