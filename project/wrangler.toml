@@ -8,4 +8,4 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding      = "RAG_DB"
 database_name = "rag-genesis-db"
-database_id  = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id  = "9c421cd9-627a-43ff-a188-8f7895bf570e"
