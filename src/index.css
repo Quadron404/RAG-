@@ -1,0 +1,655 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { position: relative; }
+
+/* ── Desktop crosshair cursor ───────────────────────────── */
+
+@media (hover: hover) and (pointer: fine) {
+  html, body, #root, button, a, input, textarea {
+    cursor: url('/cursor-crosshair.svg') 16 16, crosshair;
+  }
+}
+
+/* ── Animations ─────────────────────────────────────────── */
+
+@keyframes starDrift {
+  from { transform: translateX(-8px); }
+  to   { transform: translateX(calc(100vw + 8px)); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes errShake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-10px); }
+  40%     { transform: translateX(10px); }
+  60%     { transform: translateX(-6px); }
+  80%     { transform: translateX(6px); }
+}
+
+@keyframes analyzingGlow {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+  40%           { opacity: 1;   transform: scale(1); }
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: #000; }
+::-webkit-scrollbar-thumb  { background: #222; border-radius: 2px; }
+
+/* ── Main page ──────────────────────────────────────────── */
+
+.main-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.main-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 5vh, 44px);
+  transform: translateY(-20px);
+  padding: 0 16px;
+}
+
+.main-logo {
+  width: clamp(240px, 52vw, 500px);
+  height: auto;
+  display: block;
+  mix-blend-mode: screen;
+}
+
+.enter-data-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  font-size: clamp(9px, 2.2vw, 11px);
+  letter-spacing: 8px;
+  padding: clamp(12px, 3vw, 15px) clamp(28px, 8vw, 52px);
+  transition: background 0.18s, color 0.18s;
+  min-height: 48px;
+  min-width: 160px;
+}
+
+@media (hover: hover) {
+  .enter-data-btn:hover:not(:disabled) {
+    background: #fff;
+    color: #000;
+  }
+}
+
+.stars-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.star {
+  position: absolute;
+  left: 0;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.main-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px clamp(16px, 4vw, 28px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 20;
+  font-family: 'Courier New', monospace;
+}
+
+.main-footer-spacer { flex: 1; }
+
+.main-footer-brand {
+  font-size: 10px;
+  letter-spacing: 6px;
+  color: #555;
+  flex: 1;
+  text-align: center;
+}
+
+.main-footer-clock {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #444;
+  flex: 1;
+  text-align: right;
+  min-width: 0;
+}
+
+/* ── Passcode overlay ───────────────────────────────────── */
+
+.pass-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: 'Courier New', monospace;
+  padding: 16px;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+.pass-card {
+  width: min(360px, 92vw);
+  padding: clamp(32px, 6vw, 48px) clamp(24px, 6vw, 40px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: rgba(12, 12, 12, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: fadeIn 0.25s ease;
+  text-align: center;
+}
+
+.pass-card--shake { animation: errShake 0.45s ease; }
+
+.pass-brand {
+  font-size: 28px;
+  letter-spacing: 14px;
+  color: #fff;
+  margin-bottom: 8px;
+  font-weight: 300;
+}
+
+.pass-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #666;
+  margin-bottom: 28px;
+}
+
+.pass-dots {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  min-height: 12px;
+}
+
+.pass-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pass-dot--filled {
+  background: #fff;
+  border-color: #fff;
+}
+
+.pass-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.pass-error {
+  color: #888;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin: 12px 0 4px;
+}
+
+.pass-btn {
+  width: 100%;
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 5px;
+  padding: 14px;
+  border-radius: 8px;
+  transition: background 0.15s, border-color 0.15s;
+  min-height: 48px;
+}
+
+@media (hover: hover) {
+  .pass-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.4); }
+}
+
+/* ── CLI ────────────────────────────────────────────────── */
+
+.cli-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.93);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  font-family: 'Courier New', monospace;
+  padding: clamp(8px, 3vw, 20px);
+}
+
+.cli-window {
+  background: #000;
+  border: 1px solid #333;
+  width: 100%;
+  max-width: 800;
+  height: min(540px, 90dvh);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.15s ease;
+}
+
+.cli-titlebar {
+  border-bottom: 1px solid #222;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #444;
+}
+
+.cli-close {
+  background: transparent;
+  border: none;
+  color: #444;
+  font-size: 14px;
+  padding: 0 4px;
+  line-height: 1;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+@media (hover: hover) {
+  .cli-close:hover { color: #fff; }
+}
+
+.cli-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(12px, 3vw, 18px);
+  font-size: clamp(11px, 2.8vw, 13px);
+  line-height: 1.8;
+}
+
+.cli-banner { color: #fff; margin-bottom: 16px; }
+.cli-prompt { color: #666; flex-shrink: 0; }
+.cli-sys    { color: #888; margin-bottom: 4px; font-size: 12px; }
+.cli-ocr    { color: #ccc; margin: 4px 0; white-space: pre-wrap; word-break: break-word; }
+.cli-ok     { color: #00cc44; margin-left: 2px; font-size: 12px; }
+.cli-err    { color: #888; margin-left: 2px; font-size: 12px; }
+.cli-line   { margin-bottom: 6px; }
+
+.ascii-progress {
+  color: #aaa;
+  font-size: 12px;
+  margin-left: 2px;
+}
+
+.cli-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cli-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: clamp(11px, 2.8vw, 13px);
+  outline: none;
+  caret-color: #fff;
+  flex: 1;
+  min-width: 40px;
+}
+
+.cli-step-tag {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #333;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.cli-actionbar {
+  border-top: 1px solid #1a1a1a;
+  padding: 8px clamp(12px, 3vw, 18px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.cli-status {
+  font-size: 10px;
+  color: #2a2a2a;
+  letter-spacing: 2px;
+}
+
+.cli-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cli-action-btn {
+  background: transparent;
+  border: 1px solid #555;
+  color: #fff;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding: 8px clamp(12px, 3vw, 18px);
+  transition: border-color 0.15s, opacity 0.15s;
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.cli-action-btn:disabled { opacity: 0.35; }
+
+@media (hover: hover) {
+  .cli-action-btn:hover:not(:disabled) { border-color: #fff; }
+}
+
+.cli-action-btn--primary { letter-spacing: 5px; padding-inline: clamp(16px, 4vw, 24px); }
+
+/* ── Analyzing animation ────────────────────────────────── */
+
+.analyzing-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 14px 2px;
+}
+
+.analyzing-text {
+  font-size: 13px;
+  font-weight: 500;
+  background: linear-gradient(90deg, #444 0%, #444 35%, #fff 50%, #444 65%, #444 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: analyzingGlow 1.8s linear infinite;
+}
+
+.analyzing-dots {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.analyzing-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #888;
+  animation: dotPulse 1.4s ease infinite;
+}
+
+.analyzing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.analyzing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── RAG Keyboard (iOS-style) ───────────────────────────── */
+
+.rag-kb {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: rgba(28, 28, 30, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.rag-kb-keys { display: flex; flex-direction: column; gap: 7px; }
+
+.rag-kb-row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.rag-kb-row--bottom { margin-top: 2px; }
+
+.rag-kb-key {
+  flex: 1;
+  max-width: 34px;
+  height: 42px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  font-size: 17px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  transition: background 0.08s, transform 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rag-kb-key:active {
+  background: rgba(200, 200, 205, 0.95);
+  transform: scale(0.97);
+}
+
+.rag-kb-key--wide {
+  max-width: 44px;
+  font-size: 15px;
+  background: rgba(172, 176, 185, 0.95);
+}
+
+.rag-kb-key--active {
+  background: rgba(255, 255, 255, 1);
+}
+
+.rag-kb-key--fn {
+  max-width: 52px;
+  font-size: 13px;
+  background: rgba(172, 176, 185, 0.95);
+}
+
+.rag-kb-key--space {
+  max-width: none;
+  flex: 4;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.rag-kb-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0 2px;
+  position: relative;
+}
+
+.rag-kb-footer span {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+}
+
+.rag-kb-dismiss {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+/* ── Camera (iOS-style) ─────────────────────────────────── */
+
+.rag-cam {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+}
+
+.rag-cam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+  flex-shrink: 0;
+}
+
+.rag-cam-cancel {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 17px;
+  padding: 8px;
+  min-width: 56px;
+  text-align: left;
+}
+
+.rag-cam-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.rag-cam-preview-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 8px;
+}
+
+.rag-cam-video {
+  width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #111;
+}
+
+.rag-cam-error {
+  color: #888;
+  font-size: 15px;
+  text-align: center;
+  padding: 24px;
+}
+
+.rag-cam-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 48px;
+  padding: 24px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  flex-shrink: 0;
+}
+
+.rag-cam-flip {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rag-cam-shutter {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: transparent;
+  border: 4px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.rag-cam-shutter:disabled { opacity: 0.4; }
+
+.rag-cam-shutter-ring {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.12s;
+}
+
+.rag-cam-shutter:active .rag-cam-shutter-ring { transform: scale(0.92); }
+
+/* ── Mobile ─────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .pass-overlay { align-items: flex-start; padding-top: 18vh; }
+  .cli-window { height: min(480px, 78dvh); }
+}
+
+@media (max-width: 900px) and (hover: none) {
+  input, textarea { font-size: 16px !important; }
+}
