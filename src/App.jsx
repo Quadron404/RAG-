@@ -6,8 +6,11 @@ import { useIsMobile } from './hooks/useIsMobile.js';
 import { parseClass, parseSection } from './utils/classParser.js';
 
 const PASSCODE = import.meta.env.VITE_PASSCODE || 'RAG2718';
-const API_URL  = '/api/entries';
-const IMG_API  = '/api/analyze-image';
+const API_URL = '/api/entries';
+
+function haptic(strength = 8) {
+  navigator.vibrate?.(strength);
+}
 
 /* ── IST Clock ───────────────────────────────────────────────────────────── */
 
@@ -105,12 +108,17 @@ function PasscodeModal({ onSuccess }) {
   const [showKb, setShowKb] = useState(false);
   const inputRef = useRef(null);
 
-  useEffect(() => { if (!mobile) inputRef.current?.focus(); }, [mobile]);
+  useEffect(() => {
+    if (mobile) setShowKb(true);
+    else inputRef.current?.focus();
+  }, [mobile]);
 
   const attempt = useCallback(() => {
     if (input === PASSCODE) {
+      haptic([8, 24, 8]);
       onSuccess();
     } else {
+      haptic([20, 40, 20]);
       setError('Incorrect passcode');
       setShake(true);
       setInput('');
@@ -119,36 +127,32 @@ function PasscodeModal({ onSuccess }) {
   }, [input, onSuccess]);
 
   const kbAppend = ch => setInput(v => v + ch);
-  const kbBack   = () => setInput(v => v.slice(0, -1));
+  const kbBack = () => setInput(v => v.slice(0, -1));
 
   return (
     <div className="pass-overlay">
-      <div className={`pass-card${shake ? ' pass-card--shake' : ''}`}>
+      <div className={`pass-card${shake ? ' pass-card--shake' : ''}`} onClick={() => mobile && setShowKb(true)}>
         <div className="pass-brand">RAG</div>
         <p className="pass-label">Enter passcode to continue</p>
 
-        <div className="pass-dots">
-          {Array.from({ length: Math.max(6, input.length) }, (_, i) => (
-            <span key={i} className={`pass-dot${i < input.length ? ' pass-dot--filled' : ''}`} />
-          ))}
+        <div className="pass-field-wrap">
+          <RagInput
+            inputRef={inputRef}
+            value={input}
+            onChange={setInput}
+            onEnter={attempt}
+            mobile={mobile}
+            showKb={showKb}
+            setShowKb={setShowKb}
+            password
+            placeholder="Type passcode"
+            className="pass-input"
+          />
         </div>
-
-        <RagInput
-          inputRef={inputRef}
-          value={input}
-          onChange={setInput}
-          onEnter={attempt}
-          mobile={mobile}
-          showKb={showKb}
-          setShowKb={setShowKb}
-          password
-          placeholder=""
-          className="pass-input"
-        />
 
         {error && <p className="pass-error">{error}</p>}
 
-        <button type="button" className="pass-btn" onClick={attempt}>
+        <button type="button" className="pass-btn" onClick={() => { haptic(); attempt(); }}>
           Unlock
         </button>
       </div>
@@ -182,10 +186,13 @@ function CliModal({ onClose }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    setHistory([{ type: 'sys', text: 'Enter class (1–12), e.g. 5 or 5th' }]);
+    setHistory([{ type: 'sys', text: 'Enter class (1-12), e.g. 5 or 5th' }]);
   }, []);
 
-  useEffect(() => { if (!mobile) inputRef.current?.focus(); }, [mobile]);
+  useEffect(() => {
+    if (mobile) setShowKb(true);
+    else inputRef.current?.focus();
+  }, [mobile]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history, analyzing]);
 
   const storeEntry = useCallback(async (text) => {
@@ -215,23 +222,23 @@ function CliModal({ onClose }) {
       setHistory(h => [...h, { type: 'cmd', text }]);
       const cls = parseClass(text);
       if (!cls) {
-        setHistory(h => [...h, { type: 'sys', text: 'Invalid class. Enter 1–12 (e.g. 1, 5th, 12th).' }]);
+        setHistory(h => [...h, { type: 'sys', text: 'Invalid class. Enter 1-12 (e.g. 1, 5th, 12th).' }]);
       } else {
         setClassNum(cls);
         setStep('section');
-        setHistory(h => [...h, { type: 'sys', text: `Class ${cls} set. Enter section (A–Z).` }]);
+        setHistory(h => [...h, { type: 'sys', text: `Class ${cls} set. Enter section (A-Z).` }]);
       }
     } else if (step === 'section') {
       setHistory(h => [...h, { type: 'cmd', text }]);
       const sec = parseSection(text);
       if (!sec) {
-        setHistory(h => [...h, { type: 'sys', text: 'Invalid section. Enter a single letter A–Z.' }]);
+        setHistory(h => [...h, { type: 'sys', text: 'Invalid section. Enter a single letter A-Z.' }]);
       } else {
         setSection(sec);
         setStep('data');
         setHistory(h => [...h, {
           type: 'sys',
-          text: `Ready — Class ${classNum}, Section ${sec}. Enter data to store.`,
+          text: `Ready - Class ${classNum}, Section ${sec}. Enter data to store.`,
         }]);
       }
     } else {
@@ -242,28 +249,13 @@ function CliModal({ onClose }) {
     setTimeout(() => inputRef.current?.focus(), 60);
   }, [input, busy, analyzing, step, classNum, storeEntry]);
 
-  const handleImageCapture = useCallback(async (blob) => {
+  const handleImageCapture = useCallback(async (extracted) => {
     setCameraOpen(false);
     setAnalyzing(true);
-    setHistory(h => [...h, { type: 'sys', text: '[Image Ingest] Capturing...' }]);
+    setHistory(h => [...h, { type: 'sys', text: '[Image Ingest] Local OCR complete.' }]);
 
     try {
-      const reader = new FileReader();
-      const dataUrl = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-
-      const res = await fetch(IMG_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || 'Analysis failed');
-
-      const extracted = data.text || '';
+      await new Promise(resolve => setTimeout(resolve, 260));
       setHistory(h => [
         ...h,
         { type: 'ocr', text: extracted || '(no text detected)' },
@@ -292,7 +284,7 @@ function CliModal({ onClose }) {
       : `C${classNum}-${section}`;
 
   const kbAppend = ch => setInput(v => v + ch);
-  const kbBack   = () => setInput(v => v.slice(0, -1));
+  const kbBack = () => setInput(v => v.slice(0, -1));
 
   return (
     <>
@@ -300,7 +292,7 @@ function CliModal({ onClose }) {
         <div className="cli-window">
           <div className="cli-titlebar">
             <span>C:\RAG-Genesis\cmd.exe</span>
-            <button type="button" className="cli-close" onClick={onClose}>×</button>
+            <button type="button" className="cli-close" onClick={onClose}>x</button>
           </div>
 
           <div className="cli-body" onClick={() => inputRef.current?.focus()}>
@@ -322,7 +314,7 @@ function CliModal({ onClose }) {
                 )}
                 {entry.status === 'uploading' && <AsciiProgress />}
                 {entry.status === 'ok' && (
-                  <div className="cli-ok">[==========] 100% done — stored in Class {classNum}, Section {section}.</div>
+                  <div className="cli-ok">[==========] 100% done - stored in Class {classNum}, Section {section}.</div>
                 )}
                 {entry.status === 'err' && (
                   <div className="cli-err">[!!] Storage failed. Check connection and retry.</div>
@@ -358,7 +350,7 @@ function CliModal({ onClose }) {
               <button
                 type="button"
                 className="cli-action-btn"
-                onClick={() => setCameraOpen(true)}
+                onClick={() => { haptic(); setCameraOpen(true); }}
                 disabled={busy || analyzing}
               >
                 Image Ingest
@@ -366,7 +358,7 @@ function CliModal({ onClose }) {
               <button
                 type="button"
                 className="cli-action-btn cli-action-btn--primary"
-                onClick={submit}
+                onClick={() => { haptic(); submit(); }}
                 disabled={busy || analyzing}
               >
                 ENTER
@@ -399,6 +391,7 @@ function CliModal({ onClose }) {
 
 function MainPage({ locked }) {
   const [cliOpen, setCliOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const clock = useClock();
 
   return (
@@ -406,7 +399,7 @@ function MainPage({ locked }) {
       <div className="main-content">
         <img
           src="/ChatGPT_Image_Jun_15,_2026,_03_04_08_PM.png"
-          alt="RAG – Neural Net-Based Artificial Intelligence"
+          alt="RAG - Neural Net-Based Artificial Intelligence"
           className="main-logo"
           fetchPriority="high"
           decoding="async"
@@ -415,7 +408,10 @@ function MainPage({ locked }) {
         <button
           type="button"
           className="enter-data-btn"
-          onClick={() => !locked && setCliOpen(true)}
+          onClick={() => {
+            haptic();
+            if (!locked) setCliOpen(true);
+          }}
           disabled={locked}
           style={locked ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
         >
@@ -426,12 +422,45 @@ function MainPage({ locked }) {
       <Stars />
 
       <div className="main-footer">
-        <div className="main-footer-spacer" />
-        <span className="main-footer-brand">RAG-Genesis</span>
+        <button type="button" className="main-footer-link">Documentation</button>
+        <span className="main-footer-brand">
+          By using RAG Software you agree with its{' '}
+          <button type="button" className="main-footer-inline" onClick={() => setTermsOpen(true)}>
+            Terms & Conditions
+          </button>
+        </span>
         <span className="main-footer-clock">{clock}</span>
       </div>
 
+      {termsOpen && (
+        <div className="policy-panel">
+          <div className="policy-card">
+            <div className="policy-titlebar">
+              <span>Terms & Conditions</span>
+              <button type="button" onClick={() => setTermsOpen(false)}>x</button>
+            </div>
+            <div className="policy-empty" />
+          </div>
+        </div>
+      )}
+
       {cliOpen && <CliModal onClose={() => setCliOpen(false)} />}
+    </div>
+  );
+}
+
+function PrivacyPopup({ onAgree }) {
+  return (
+    <div className="policy-panel policy-panel--top">
+      <div className="policy-card policy-card--privacy">
+        <div className="policy-titlebar">
+          <span>Privacy Policy</span>
+        </div>
+        <div className="policy-empty" />
+        <button type="button" className="policy-agree" onClick={() => { haptic(); onAgree(); }}>
+          I Agree
+        </button>
+      </div>
     </div>
   );
 }
@@ -440,11 +469,13 @@ function MainPage({ locked }) {
 
 export default function App() {
   const [authed, setAuthed] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
   return (
     <>
       <MainPage locked={!authed} />
-      {!authed && <PasscodeModal onSuccess={() => setAuthed(true)} />}
+      {!authed && <PasscodeModal onSuccess={() => { setAuthed(true); setPrivacyOpen(true); }} />}
+      {authed && privacyOpen && <PrivacyPopup onAgree={() => setPrivacyOpen(false)} />}
     </>
   );
 }

@@ -19,7 +19,7 @@ body {
 
 @media (hover: hover) and (pointer: fine) {
   html, body, #root, button, a, input, textarea {
-    cursor: url('/cursor-crosshair.svg') 16 16, crosshair;
+    cursor: url('/cursor-crosshair.svg') 24 24, crosshair;
   }
 }
 
@@ -131,7 +131,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px clamp(16px, 4vw, 28px);
+  padding: 10px clamp(12px, 4vw, 28px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -139,13 +139,36 @@ body {
   font-family: 'Courier New', monospace;
 }
 
-.main-footer-spacer { flex: 1; }
+.main-footer-link,
+.main-footer-inline {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.42);
+  font: inherit;
+  letter-spacing: 1px;
+  text-decoration: none;
+  min-height: 28px;
+  padding: 0;
+}
+
+.main-footer-link {
+  flex: 1;
+  text-align: left;
+  font-size: 10px;
+}
+
+.main-footer-inline {
+  display: inline;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 .main-footer-brand {
   font-size: 10px;
-  letter-spacing: 6px;
+  letter-spacing: 1px;
   color: #555;
-  flex: 1;
+  flex: 1.5;
   text-align: center;
 }
 
@@ -167,9 +190,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.08), transparent 34%),
+    rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
   font-family: 'Courier New', monospace;
   padding: 16px;
   padding-bottom: env(safe-area-inset-bottom, 16px);
@@ -178,63 +203,69 @@ body {
 .pass-card {
   width: min(360px, 92vw);
   padding: clamp(32px, 6vw, 48px) clamp(24px, 6vw, 40px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  background: rgba(12, 12, 12, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
+    rgba(18, 18, 20, 0.56);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
   animation: fadeIn 0.25s ease;
   text-align: center;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
 }
 
 .pass-card--shake { animation: errShake 0.45s ease; }
 
 .pass-brand {
   font-size: 28px;
-  letter-spacing: 14px;
+  letter-spacing: 12px;
   color: #fff;
   margin-bottom: 8px;
   font-weight: 300;
+  padding-left: 12px;
 }
 
 .pass-label {
   font-size: 11px;
   letter-spacing: 2px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.46);
   margin-bottom: 28px;
 }
 
-.pass-dots {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  min-height: 12px;
-}
-
-.pass-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.pass-dot--filled {
-  background: #fff;
-  border-color: #fff;
+.pass-field-wrap {
+  margin-top: 8px;
 }
 
 .pass-input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  width: 1px;
-  height: 1px;
+  width: 100%;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035)),
+    rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  color: #fff;
+  outline: none;
+  text-align: center;
+  font-family: inherit;
+  font-size: 17px;
+  letter-spacing: 4px;
+  padding: 0 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.pass-input::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .pass-error {
-  color: #888;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 11px;
   letter-spacing: 1px;
   margin: 12px 0 4px;
@@ -243,20 +274,20 @@ body {
 .pass-btn {
   width: 100%;
   margin-top: 20px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.24);
   color: #fff;
   font-family: inherit;
   font-size: 11px;
   letter-spacing: 5px;
   padding: 14px;
-  border-radius: 8px;
-  transition: background 0.15s, border-color 0.15s;
+  border-radius: 7px;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
   min-height: 48px;
 }
 
 @media (hover: hover) {
-  .pass-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.4); }
+  .pass-btn:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.42); transform: translateY(-1px); }
 }
 
 /* ── CLI ────────────────────────────────────────────────── */
@@ -277,7 +308,7 @@ body {
   background: #000;
   border: 1px solid #333;
   width: 100%;
-  max-width: 800;
+  max-width: 800px;
   height: min(540px, 90dvh);
   display: flex;
   flex-direction: column;
@@ -446,11 +477,13 @@ body {
   right: 0;
   bottom: 0;
   z-index: 2000;
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-  background: rgba(28, 28, 30, 0.72);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 4px calc(7px + env(safe-area-inset-bottom, 0px));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)),
+    rgba(24, 24, 28, 0.64);
+  backdrop-filter: blur(34px) saturate(190%);
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   user-select: none;
   touch-action: manipulation;
@@ -468,18 +501,19 @@ body {
 
 .rag-kb-key {
   flex: 1;
-  max-width: 34px;
+  max-width: 35px;
   height: 42px;
   border: none;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.92);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(232, 233, 236, 0.92));
   color: #000;
   font-size: 17px;
   font-weight: 400;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   transition: background 0.08s, transform 0.08s;
   -webkit-tap-highlight-color: transparent;
 }
@@ -490,19 +524,25 @@ body {
 }
 
 .rag-kb-key--wide {
-  max-width: 44px;
-  font-size: 15px;
-  background: rgba(172, 176, 185, 0.95);
+  max-width: 58px;
+  font-size: 12px;
+  background:
+    linear-gradient(180deg, rgba(190, 194, 204, 0.96), rgba(146, 151, 162, 0.94));
 }
 
 .rag-kb-key--active {
   background: rgba(255, 255, 255, 1);
 }
 
+.rag-kb-key--locked {
+  background: #fff;
+}
+
 .rag-kb-key--fn {
   max-width: 52px;
-  font-size: 13px;
-  background: rgba(172, 176, 185, 0.95);
+  font-size: 12px;
+  background:
+    linear-gradient(180deg, rgba(190, 194, 204, 0.96), rgba(146, 151, 162, 0.94));
 }
 
 .rag-kb-key--space {
@@ -535,6 +575,24 @@ body {
   color: rgba(255, 255, 255, 0.4);
   font-size: 14px;
   padding: 4px 8px;
+}
+
+.rag-kb-shift-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.rag-kb-shift-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.rag-kb-shift-lock {
+  stroke-width: 2.2;
 }
 
 /* ── Camera (iOS-style) ─────────────────────────────────── */
@@ -576,6 +634,7 @@ body {
 
 .rag-cam-preview-wrap {
   flex: 1;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -591,6 +650,16 @@ body {
   background: #111;
 }
 
+.rag-cam-guide {
+  position: absolute;
+  width: min(78vw, 620px);
+  aspect-ratio: 16 / 7;
+  border: 2px dashed rgba(255, 255, 255, 0.82);
+  border-radius: 16px;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+}
+
 .rag-cam-error {
   color: #888;
   font-size: 15px;
@@ -602,52 +671,165 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 48px;
-  padding: 24px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  gap: 28px;
+  padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 0px));
   flex-shrink: 0;
 }
 
 .rag-cam-flip {
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  border: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07)),
+    rgba(20, 20, 22, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-.rag-cam-shutter {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: transparent;
-  border: 4px solid #fff;
+.rag-cam-flip svg {
+  width: 30px;
+  height: 30px;
+}
+
+.rag-cam-flip path,
+.rag-cam-flip circle {
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rag-cam-extract {
+  min-width: 156px;
+  height: 52px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  padding: 0 22px;
+}
+
+.rag-cam-extract:disabled { opacity: 0.45; }
+
+.rag-cam-output {
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+}
+
+.rag-cam-status {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.rag-cam-text {
+  min-height: 46px;
+  max-height: 96px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.rag-cam-canvas {
+  display: none;
+}
+
+.policy-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 2400;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.64);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
 
-.rag-cam-shutter:disabled { opacity: 0.4; }
+.policy-panel--top { z-index: 2600; }
 
-.rag-cam-shutter-ring {
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.12s;
+.policy-card {
+  width: min(520px, 92vw);
+  min-height: 260px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03)),
+    rgba(16, 16, 18, 0.72);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.54);
+  display: flex;
+  flex-direction: column;
 }
 
-.rag-cam-shutter:active .rag-cam-shutter-ring { transform: scale(0.92); }
+.policy-card--privacy { min-height: 300px; }
+
+.policy-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.policy-titlebar button {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.66);
+  font: inherit;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.policy-empty {
+  flex: 1;
+}
+
+.policy-agree {
+  margin: 0 16px 16px;
+  height: 46px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
 
 /* ── Mobile ─────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
   .pass-overlay { align-items: flex-start; padding-top: 18vh; }
   .cli-window { height: min(480px, 78dvh); }
+  .main-footer { align-items: flex-end; gap: 8px; }
+  .main-footer-brand { font-size: 8px; line-height: 1.45; }
+  .main-footer-clock, .main-footer-link { font-size: 8px; }
+  .rag-cam-guide { width: 84vw; }
 }
 
 @media (max-width: 900px) and (hover: none) {

@@ -1,6 +1,6 @@
 /**
- * Cloudflare Pages Function — POST /api/entries
- * Requires D1 binding RAG_DB and stores entries per class (1–12) + section (A–Z).
+ * Cloudflare Pages Function - POST /api/entries
+ * Requires D1 binding RAG_DB and stores entries per class (1-12) + section (A-Z).
  */
 
 const CORS = {
@@ -42,7 +42,7 @@ export async function onRequestPost({ request, env }) {
 
   const sec = String(section || '').trim().toUpperCase();
   if (!/^[A-Z]$/.test(sec)) {
-    return json({ error: 'section must be a single letter A–Z' }, 400);
+    return json({ error: 'section must be a single letter A-Z' }, 400);
   }
 
   const id        = crypto.randomUUID();
