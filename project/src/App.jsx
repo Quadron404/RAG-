@@ -1,7 +1,16 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import RagKeyboard from './components/RagKeyboard.jsx';
+import CameraCapture from './components/CameraCapture.jsx';
+import AnalyzingBar from './components/AnalyzingBar.jsx';
+import { useIsMobile } from './hooks/useIsMobile.js';
+import { parseClass, parseSection } from './utils/classParser.js';
 
 const PASSCODE = import.meta.env.VITE_PASSCODE || 'RAG2718';
-const API_URL  = '/api/entries';
+const API_URL = '/api/entries';
+
+function haptic(strength = 8) {
+  navigator.vibrate?.(strength);
+}
 
 /* ── IST Clock ───────────────────────────────────────────────────────────── */
 
@@ -10,11 +19,8 @@ function useClock() {
   useEffect(() => {
     const tick = () => {
       const s = new Date().toLocaleTimeString('en-IN', {
-        timeZone:  'Asia/Kolkata',
-        hour12:    false,
-        hour:      '2-digit',
-        minute:    '2-digit',
-        second:    '2-digit',
+        timeZone: 'Asia/Kolkata', hour12: false,
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
       });
       setT(s + ' IST');
     };
@@ -30,30 +36,19 @@ function useClock() {
 function Stars() {
   const stars = useMemo(() =>
     Array.from({ length: 170 }, (_, i) => ({
-      id:      i,
-      top:     Math.random() * 100,
-      size:    Math.random() * 2.2 + 0.6,
-      dur:     Math.random() * 14 + 7,
-      delay:  -(Math.random() * 21),
+      id: i, top: Math.random() * 100,
+      size: Math.random() * 2.2 + 0.6,
+      dur: Math.random() * 14 + 7,
+      delay: -(Math.random() * 21),
       opacity: Math.random() * 0.5 + 0.12,
     })), []);
 
   return (
-    <div style={{
-      position: 'absolute', inset: 0, overflow: 'hidden',
-      pointerEvents: 'none', zIndex: 10,
-    }}>
+    <div className="stars-layer">
       {stars.map(s => (
-        <div key={s.id} style={{
-          position:     'absolute',
-          top:          `${s.top}%`,
-          left:         0,
-          width:        `${s.size}px`,
-          height:       `${s.size}px`,
-          borderRadius: '50%',
-          background:   '#fff',
-          opacity:      s.opacity,
-          animation:    `starDrift ${s.dur}s linear ${s.delay}s infinite`,
+        <div key={s.id} className="star" style={{
+          top: `${s.top}%`, width: s.size, height: s.size, opacity: s.opacity,
+          animation: `starDrift ${s.dur}s linear ${s.delay}s infinite`,
         }} />
       ))}
     </div>
@@ -77,93 +72,99 @@ function AsciiProgress() {
     const id = setInterval(() => setFrame(f => (f + 1) % BAR_FRAMES.length), 280);
     return () => clearInterval(id);
   }, []);
+  return <span className="ascii-progress">{BAR_FRAMES[frame]}</span>;
+}
+
+/* ── Mobile-aware input ──────────────────────────────────────────────────── */
+
+function RagInput({ value, onChange, onEnter, inputRef, disabled, mobile, showKb, setShowKb, placeholder, className, style, password }) {
   return (
-    <span style={{ color: '#aaa', fontFamily: "'Courier New',monospace", fontSize: 12 }}>
-      {BAR_FRAMES[frame]}
-    </span>
+    <input
+      ref={inputRef}
+      type={password ? 'password' : 'text'}
+      value={value}
+      readOnly={mobile}
+      inputMode={mobile ? 'none' : undefined}
+      onChange={e => !mobile && onChange(e.target.value)}
+      onFocus={() => mobile && setShowKb?.(true)}
+      onKeyDown={e => { if (!mobile && e.key === 'Enter') onEnter?.(); }}
+      disabled={disabled}
+      placeholder={placeholder}
+      className={className}
+      style={style}
+      autoComplete="off"
+      spellCheck={false}
+    />
   );
 }
 
 /* ── Passcode Modal ──────────────────────────────────────────────────────── */
 
 function PasscodeModal({ onSuccess }) {
+  const mobile = useIsMobile();
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
-  const inputRef          = useRef(null);
+  const [showKb, setShowKb] = useState(false);
+  const inputRef = useRef(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    if (mobile) setShowKb(true);
+    else inputRef.current?.focus();
+  }, [mobile]);
 
   const attempt = useCallback(() => {
     if (input === PASSCODE) {
+      haptic([8, 24, 8]);
       onSuccess();
     } else {
-      setError('Wrong passcode. Try again.');
+      haptic([20, 40, 20]);
+      setError('Incorrect passcode');
       setShake(true);
       setInput('');
-      setTimeout(() => { setShake(false); setError(''); inputRef.current?.focus(); }, 1400);
+      setTimeout(() => { setShake(false); setError(''); }, 1400);
     }
   }, [input, onSuccess]);
 
+  const kbAppend = ch => setInput(v => v + ch);
+  const kbBack = () => setInput(v => v.slice(0, -1));
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: '#000',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, fontFamily: "'Courier New',monospace",
-    }}>
-      <div style={{
-        border: '1px solid #333',
-        padding: 'clamp(28px,6vw,44px) clamp(24px,8vw,52px)',
-        width: 'min(380px,92vw)',
-        background: '#000',
-        animation: shake ? 'errShake 0.45s ease' : 'fadeIn 0.2s ease',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: 13, letterSpacing: 6, color: '#fff' }}>
-            ENTER PASSCODE
-          </div>
+    <div className="pass-overlay">
+      <div className={`pass-card${shake ? ' pass-card--shake' : ''}`} onClick={() => mobile && setShowKb(true)}>
+        <div className="pass-brand">RAG</div>
+        <p className="pass-label">Enter passcode to continue</p>
+
+        <div className="pass-field-wrap">
+          <RagInput
+            inputRef={inputRef}
+            value={input}
+            onChange={setInput}
+            onEnter={attempt}
+            mobile={mobile}
+            showKb={showKb}
+            setShowKb={setShowKb}
+            password
+            placeholder="Type passcode"
+            className="pass-input"
+          />
         </div>
 
-        <input
-          ref={inputRef}
-          type="password"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && attempt()}
-          style={{
-            width: '100%', background: 'transparent',
-            border: 'none', borderBottom: '1px solid #444',
-            color: '#fff', fontFamily: "'Courier New',monospace",
-            fontSize: 'clamp(15px,4vw,18px)',
-            letterSpacing: 10, padding: '10px 0',
-            outline: 'none', caretColor: '#fff',
-            marginBottom: 8, textAlign: 'center', display: 'block',
-          }}
-          placeholder="········"
-          autoComplete="off"
-        />
+        {error && <p className="pass-error">{error}</p>}
 
-        {error && (
-          <div style={{ color: '#888', fontSize: 11, textAlign: 'center', marginBottom: 12, letterSpacing: 1 }}>
-            {error}
-          </div>
-        )}
-        {!error && <div style={{ height: 28 }} />}
-
-        <button onClick={attempt} style={{
-          width: '100%', background: 'transparent',
-          border: '1px solid #555', color: '#fff',
-          fontFamily: "'Courier New',monospace",
-          fontSize: 11, letterSpacing: 6, padding: '13px',
-          cursor: 'pointer', transition: 'border-color 0.15s',
-          minHeight: 48,
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = '#fff'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = '#555'; }}
-        >
-          ENTER
+        <button type="button" className="pass-btn" onClick={() => { haptic(); attempt(); }}>
+          Unlock
         </button>
       </div>
+
+      {mobile && showKb && (
+        <RagKeyboard
+          onKey={kbAppend}
+          onBackspace={kbBack}
+          onEnter={attempt}
+          onClose={() => setShowKb(false)}
+        />
+      )}
     </div>
   );
 }
@@ -171,241 +172,295 @@ function PasscodeModal({ onSuccess }) {
 /* ── CLI Modal ───────────────────────────────────────────────────────────── */
 
 function CliModal({ onClose }) {
-  const [history, setHistory] = useState([]);
-  const [input,   setInput]   = useState('');
-  const [busy,    setBusy]    = useState(false);
+  const mobile = useIsMobile();
+  const [history, setHistory]   = useState([]);
+  const [input, setInput]       = useState('');
+  const [busy, setBusy]         = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [showKb, setShowKb]     = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [step, setStep]         = useState('class');
+  const [classNum, setClassNum] = useState(null);
+  const [section, setSection]   = useState(null);
   const inputRef  = useRef(null);
   const bottomRef = useRef(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history]);
+  useEffect(() => {
+    setHistory([{ type: 'sys', text: 'Enter class (1-12), e.g. 5 or 5th' }]);
+  }, []);
 
-  const submit = useCallback(async () => {
-    const text = input.trim();
-    if (!text || busy) return;
-    setBusy(true);
-    setInput('');
+  useEffect(() => {
+    if (mobile) setShowKb(true);
+    else inputRef.current?.focus();
+  }, [mobile]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history, analyzing]);
+
+  const storeEntry = useCallback(async (text) => {
     const idx = history.length;
-    setHistory(h => [...h, { text, status: 'uploading' }]);
-
+    setHistory(h => [...h, { type: 'cmd', text, status: 'uploading' }]);
     try {
-      const res  = await fetch(API_URL, {
-        method:  'POST',
+      const res = await fetch(API_URL, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, class: classNum, section }),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || 'Failed');
       setHistory(h => h.map((e, i) => i === idx ? { ...e, status: 'ok' } : e));
     } catch {
       setHistory(h => h.map((e, i) => i === idx ? { ...e, status: 'err' } : e));
+    }
+  }, [history.length, classNum, section]);
+
+  const submit = useCallback(async () => {
+    const text = input.trim();
+    if (!text || busy || analyzing) return;
+    setBusy(true);
+    setInput('');
+
+    if (step === 'class') {
+      setHistory(h => [...h, { type: 'cmd', text }]);
+      const cls = parseClass(text);
+      if (!cls) {
+        setHistory(h => [...h, { type: 'sys', text: 'Invalid class. Enter 1-12 (e.g. 1, 5th, 12th).' }]);
+      } else {
+        setClassNum(cls);
+        setStep('section');
+        setHistory(h => [...h, { type: 'sys', text: `Class ${cls} set. Enter section (A-Z).` }]);
+      }
+    } else if (step === 'section') {
+      setHistory(h => [...h, { type: 'cmd', text }]);
+      const sec = parseSection(text);
+      if (!sec) {
+        setHistory(h => [...h, { type: 'sys', text: 'Invalid section. Enter a single letter A-Z.' }]);
+      } else {
+        setSection(sec);
+        setStep('data');
+        setHistory(h => [...h, {
+          type: 'sys',
+          text: `Ready - Class ${classNum}, Section ${sec}. Enter data to store.`,
+        }]);
+      }
+    } else {
+      await storeEntry(text);
+    }
+
+    setBusy(false);
+    setTimeout(() => inputRef.current?.focus(), 60);
+  }, [input, busy, analyzing, step, classNum, storeEntry]);
+
+  const handleImageCapture = useCallback(async (extracted) => {
+    setCameraOpen(false);
+    setAnalyzing(true);
+    setHistory(h => [...h, { type: 'sys', text: '[Image Ingest] Local OCR complete.' }]);
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 260));
+      setHistory(h => [
+        ...h,
+        { type: 'ocr', text: extracted || '(no text detected)' },
+      ]);
+
+      if (step === 'data' && extracted) {
+        await storeEntry(extracted);
+      } else if (extracted && step !== 'data') {
+        setHistory(h => [...h, {
+          type: 'sys',
+          text: 'Complete class & section setup before storing image text.',
+        }]);
+      }
+    } catch (err) {
+      setHistory(h => [...h, { type: 'sys', text: `[!!] Image analysis failed: ${err.message}` }]);
     } finally {
-      setBusy(false);
+      setAnalyzing(false);
       setTimeout(() => inputRef.current?.focus(), 60);
     }
-  }, [input, busy, history.length]);
+  }, [step, storeEntry]);
+
+  const promptLabel = step === 'class'
+    ? 'class'
+    : step === 'section'
+      ? 'section'
+      : `C${classNum}-${section}`;
+
+  const kbAppend = ch => setInput(v => v + ch);
+  const kbBack = () => setInput(v => v.slice(0, -1));
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.93)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 500, fontFamily: "'Courier New',monospace",
-      padding: 'clamp(8px,3vw,20px)',
-    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-
-      <div style={{
-        background: '#000', border: '1px solid #333',
-        width: '100%', maxWidth: 800,
-        height: 'min(540px,90dvh)',
-        display: 'flex', flexDirection: 'column',
-        animation: 'fadeIn 0.15s ease',
-      }}>
-
-        {/* title bar */}
-        <div style={{
-          borderBottom: '1px solid #222',
-          padding: '7px 14px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 11, letterSpacing: 1, color: '#444' }}>
-            C:\RAG-Genesis\cmd.exe
-          </span>
-          <button onClick={onClose} style={{
-            background: 'transparent', border: 'none',
-            color: '#444', fontSize: 14, cursor: 'pointer',
-            padding: '0 4px', lineHeight: 1, minWidth: 28, minHeight: 28,
-          }}
-            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = '#444'; }}
-          >×</button>
-        </div>
-
-        {/* terminal body */}
-        <div style={{
-          flex: 1, overflowY: 'auto',
-          padding: 'clamp(12px,3vw,18px)',
-          fontSize: 'clamp(11px,2.8vw,13px)', lineHeight: 1.8,
-          cursor: 'text',
-        }} onClick={() => inputRef.current?.focus()}>
-
-          <div style={{ color: '#fff', marginBottom: 16 }}>
-            RAG-Genesis [Version 2.7182.8]
+    <>
+      <div className="cli-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="cli-window">
+          <div className="cli-titlebar">
+            <span>C:\RAG-Genesis\cmd.exe</span>
+            <button type="button" className="cli-close" onClick={onClose}>x</button>
           </div>
 
-          {history.map((entry, i) => (
-            <div key={i} style={{ marginBottom: 6 }}>
-              <div>
-                <span style={{ color: '#666' }}>C:\RAG-Genesis&gt;&nbsp;</span>
-                <span style={{ color: '#fff' }}>{entry.text}</span>
+          <div className="cli-body" onClick={() => inputRef.current?.focus()}>
+            <div className="cli-banner">RAG-Genesis [Version 2.7182.8]</div>
+
+            {history.map((entry, i) => (
+              <div key={i} className="cli-line">
+                {entry.type === 'cmd' && (
+                  <div>
+                    <span className="cli-prompt">C:\RAG-Genesis&gt;&nbsp;</span>
+                    <span>{entry.text}</span>
+                  </div>
+                )}
+                {entry.type === 'sys' && <div className="cli-sys">{entry.text}</div>}
+                {entry.type === 'ocr' && (
+                  <div className="cli-ocr">
+                    <span className="cli-prompt">[OCR]&nbsp;</span>{entry.text}
+                  </div>
+                )}
+                {entry.status === 'uploading' && <AsciiProgress />}
+                {entry.status === 'ok' && (
+                  <div className="cli-ok">[==========] 100% done - stored in Class {classNum}, Section {section}.</div>
+                )}
+                {entry.status === 'err' && (
+                  <div className="cli-err">[!!] Storage failed. Check connection and retry.</div>
+                )}
               </div>
+            ))}
 
-              {entry.status === 'uploading' && (
-                <div style={{ marginLeft: 2 }}>
-                  <AsciiProgress />
-                </div>
-              )}
+            {analyzing && <AnalyzingBar />}
 
-              {entry.status === 'ok' && (
-                <div style={{ color: '#00cc44', marginLeft: 2, fontSize: 12 }}>
-                  [==========] 100% done — data stored successfully.
-                </div>
-              )}
-
-              {entry.status === 'err' && (
-                <div style={{ color: '#888', marginLeft: 2, fontSize: 12 }}>
-                  [!!] Storage failed. Check connection and retry.
-                </div>
-              )}
+            <div className="cli-input-row">
+              <span className="cli-prompt">C:\RAG-Genesis&gt;&nbsp;</span>
+              <RagInput
+                inputRef={inputRef}
+                value={input}
+                onChange={setInput}
+                onEnter={submit}
+                disabled={busy || analyzing}
+                mobile={mobile}
+                showKb={showKb}
+                setShowKb={setShowKb}
+                className="cli-input"
+              />
+              <span className="cli-step-tag">{promptLabel}</span>
             </div>
-          ))}
-
-          {/* active prompt */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ color: '#666', flexShrink: 0 }}>C:\RAG-Genesis&gt;&nbsp;</span>
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose(); }}
-              disabled={busy}
-              style={{
-                background: 'transparent', border: 'none', color: '#fff',
-                fontFamily: "'Courier New',monospace",
-                fontSize: 'clamp(11px,2.8vw,13px)',
-                outline: 'none', caretColor: '#fff',
-                flex: 1, minWidth: 40,
-              }}
-              autoComplete="off" spellCheck={false}
-            />
+            <div ref={bottomRef} />
           </div>
-          <div ref={bottomRef} />
-        </div>
 
-        {/* bottom action bar */}
-        <div style={{
-          borderTop: '1px solid #1a1a1a',
-          padding: '8px clamp(12px,3vw,18px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 10, color: '#2a2a2a', letterSpacing: 2 }}>
-            {busy ? 'UPLOADING...' : 'READY'}
-          </span>
-          <button onClick={submit} disabled={busy} style={{
-            background: 'transparent', border: '1px solid #555',
-            color: '#fff', fontFamily: "'Courier New',monospace",
-            fontSize: 10, letterSpacing: 5,
-            padding: '8px clamp(16px,4vw,24px)',
-            cursor: busy ? 'default' : 'pointer',
-            opacity: busy ? 0.35 : 1,
-            transition: 'border-color 0.15s',
-            minHeight: 36,
-          }}
-            onMouseEnter={e => { if (!busy) e.currentTarget.style.borderColor = '#fff'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#555'; }}
-          >
-            ENTER
-          </button>
+          <div className="cli-actionbar">
+            <span className="cli-status">
+              {analyzing ? 'ANALYZING...' : busy ? 'UPLOADING...' : 'READY'}
+            </span>
+            <div className="cli-actions">
+              <button
+                type="button"
+                className="cli-action-btn"
+                onClick={() => { haptic(); setCameraOpen(true); }}
+                disabled={busy || analyzing}
+              >
+                Image Ingest
+              </button>
+              <button
+                type="button"
+                className="cli-action-btn cli-action-btn--primary"
+                onClick={() => { haptic(); submit(); }}
+                disabled={busy || analyzing}
+              >
+                ENTER
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {mobile && showKb && !cameraOpen && (
+        <RagKeyboard
+          onKey={kbAppend}
+          onBackspace={kbBack}
+          onEnter={submit}
+          onClose={() => setShowKb(false)}
+        />
+      )}
+
+      {cameraOpen && (
+        <CameraCapture
+          onCapture={handleImageCapture}
+          onClose={() => setCameraOpen(false)}
+        />
+      )}
+    </>
   );
 }
 
 /* ── Main Page ───────────────────────────────────────────────────────────── */
 
-function MainPage() {
+function MainPage({ locked }) {
   const [cliOpen, setCliOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const clock = useClock();
 
   return (
-    <div style={{
-      position: 'relative', width: '100%', height: '100%',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      overflow: 'hidden', background: '#000',
-    }}>
-      {/* Logo — z-index 5, stars at z-index 10 pass above it */}
-      <div style={{
-        position: 'relative', zIndex: 5,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', gap: 'clamp(24px,5vh,44px)',
-        transform: 'translateY(-20px)',
-        padding: '0 16px',
-      }}>
+    <div className="main-page">
+      <div className="main-content">
         <img
           src="/ChatGPT_Image_Jun_15,_2026,_03_04_08_PM.png"
-          alt="RAG – Neural Net-Based Artificial Intelligence"
-          style={{
-            width: 'clamp(240px,52vw,500px)',
-            height: 'auto',
-            display: 'block',
-            mixBlendMode: 'screen',
-          }}
+          alt="RAG - Neural Net-Based Artificial Intelligence"
+          className="main-logo"
+          fetchPriority="high"
+          decoding="async"
         />
 
         <button
-          onClick={() => setCliOpen(true)}
-          style={{
-            background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.55)',
-            color: '#fff',
-            fontFamily: "'Courier New',monospace",
-            fontSize: 'clamp(9px,2.2vw,11px)',
-            letterSpacing: 8,
-            padding: 'clamp(12px,3vw,15px) clamp(28px,8vw,52px)',
-            cursor: 'pointer',
-            transition: 'background 0.18s, color 0.18s',
-            minHeight: 48, minWidth: 160,
+          type="button"
+          className="enter-data-btn"
+          onClick={() => {
+            haptic();
+            if (!locked) setCliOpen(true);
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#000'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#fff'; }}
+          disabled={locked}
+          style={locked ? { opacity: 0.4, pointerEvents: 'none' } : undefined}
         >
           ENTER DATA
         </button>
       </div>
 
-      {/* Stars drift ABOVE the logo */}
       <Stars />
 
-      {/* Footer */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '10px clamp(16px,4vw,28px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        zIndex: 20, fontFamily: "'Courier New',monospace",
-      }}>
-        <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 10, letterSpacing: 6, color: '#555', flex: 1, textAlign: 'center' }}>
-          RAG-Genesis
+      <div className="main-footer">
+        <button type="button" className="main-footer-link">Documentation</button>
+        <span className="main-footer-brand">
+          By using RAG Software you agree with its{' '}
+          <button type="button" className="main-footer-inline" onClick={() => setTermsOpen(true)}>
+            Terms & Conditions
+          </button>
         </span>
-        <span style={{ fontSize: 10, letterSpacing: 1, color: '#444', flex: 1, textAlign: 'right', minWidth: 0 }}>
-          {clock}
-        </span>
+        <span className="main-footer-clock">{clock}</span>
       </div>
 
+      {termsOpen && (
+        <div className="policy-panel">
+          <div className="policy-card">
+            <div className="policy-titlebar">
+              <span>Terms & Conditions</span>
+              <button type="button" onClick={() => setTermsOpen(false)}>x</button>
+            </div>
+            <div className="policy-empty" />
+          </div>
+        </div>
+      )}
+
       {cliOpen && <CliModal onClose={() => setCliOpen(false)} />}
+    </div>
+  );
+}
+
+function PrivacyPopup({ onAgree }) {
+  return (
+    <div className="policy-panel policy-panel--top">
+      <div className="policy-card policy-card--privacy">
+        <div className="policy-titlebar">
+          <span>Privacy Policy</span>
+        </div>
+        <div className="policy-empty" />
+        <button type="button" className="policy-agree" onClick={() => { haptic(); onAgree(); }}>
+          I Agree
+        </button>
+      </div>
     </div>
   );
 }
@@ -414,7 +469,13 @@ function MainPage() {
 
 export default function App() {
   const [authed, setAuthed] = useState(false);
-  return authed
-    ? <MainPage />
-    : <PasscodeModal onSuccess={() => setAuthed(true)} />;
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+
+  return (
+    <>
+      <MainPage locked={!authed} />
+      {!authed && <PasscodeModal onSuccess={() => { setAuthed(true); setPrivacyOpen(true); }} />}
+      {authed && privacyOpen && <PrivacyPopup onAgree={() => setPrivacyOpen(false)} />}
+    </>
+  );
 }

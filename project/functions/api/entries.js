@@ -1,7 +1,6 @@
 /**
- * Cloudflare Pages Function — POST /api/entries
- * Requires a D1 binding named RAG_DB (set in Cloudflare Pages dashboard).
- * Create the table first: see d1-schema.sql
+ * Cloudflare Pages Function - POST /api/entries
+ * Requires D1 binding RAG_DB and stores entries per class (1-12) + section (A-Z).
  */
 
 const CORS = {
@@ -25,9 +24,9 @@ export async function onRequestPost({ request, env }) {
   const db = env.RAG_DB;
   if (!db) return json({ error: 'D1 binding RAG_DB not configured' }, 500);
 
-  let content;
+  let content, classNum, section;
   try {
-    ({ content } = await request.json());
+    ({ content, class: classNum, section } = await request.json());
   } catch {
     return json({ error: 'Invalid JSON body' }, 400);
   }
@@ -36,16 +35,28 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'content is required' }, 400);
   }
 
+  const cls = Number(classNum);
+  if (!Number.isInteger(cls) || cls < 1 || cls > 12) {
+    return json({ error: 'class must be an integer from 1 to 12' }, 400);
+  }
+
+  const sec = String(section || '').trim().toUpperCase();
+  if (!/^[A-Z]$/.test(sec)) {
+    return json({ error: 'section must be a single letter A-Z' }, 400);
+  }
+
   const id        = crypto.randomUUID();
   const createdAt = new Date().toISOString();
 
   try {
     await db
-      .prepare('INSERT INTO rag_entries (id, content, created_at) VALUES (?, ?, ?)')
-      .bind(id, content.trim(), createdAt)
+      .prepare(
+        'INSERT INTO rag_entries (id, class_num, section, content, created_at) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(id, cls, sec, content.trim(), createdAt)
       .run();
 
-    return json({ success: true, id, created_at: createdAt });
+    return json({ success: true, id, class: cls, section: sec, created_at: createdAt });
   } catch (err) {
     return json({ error: String(err) }, 500);
   }
