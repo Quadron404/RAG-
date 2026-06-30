@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS rag_entries (
 CREATE INDEX IF NOT EXISTS idx_rag_class_section
   ON rag_entries (class_num, section);
 
+<<<<<<< HEAD
 CREATE TABLE IF NOT EXISTS passcodes (
   passcode_id             TEXT PRIMARY KEY,
   status                  TEXT NOT NULL DEFAULT 'Unused'
@@ -30,6 +31,8 @@ CREATE INDEX IF NOT EXISTS idx_passcodes_status
 -- Seed your issued passcodes before launch. All start as Unused.
 -- INSERT INTO passcodes (passcode_id) VALUES ('RAG2718');
 
+=======
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
 -- Migration from legacy schema (no class/section columns):
 -- ALTER TABLE rag_entries ADD COLUMN class_num INTEGER DEFAULT 1;
 -- ALTER TABLE rag_entries ADD COLUMN section TEXT DEFAULT 'A';

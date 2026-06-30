@@ -5,13 +5,19 @@ import AnalyzingBar from './components/AnalyzingBar.jsx';
 import { useIsMobile } from './hooks/useIsMobile.js';
 import { parseClass, parseSection } from './utils/classParser.js';
 
+<<<<<<< HEAD
 const API_URL = '/api/entries';
 const PASSCODE_API = '/api/passcodes';
+=======
+const PASSCODE = import.meta.env.VITE_PASSCODE || 'RAG2718';
+const API_URL = '/api/entries';
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
 
 function haptic(strength = 8) {
   navigator.vibrate?.(strength);
 }
 
+<<<<<<< HEAD
 function bufferToBase64Url(buffer) {
   const bytes = new Uint8Array(buffer);
   let binary = '';
@@ -106,6 +112,8 @@ async function authenticatePasscode(passcodeId, credentialId) {
   }
 }
 
+=======
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
 /* ── IST Clock ───────────────────────────────────────────────────────────── */
 
 function useClock() {
@@ -200,7 +208,10 @@ function PasscodeModal({ onSuccess }) {
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const [showKb, setShowKb] = useState(false);
+<<<<<<< HEAD
   const [busy, setBusy] = useState(false);
+=======
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -208,6 +219,7 @@ function PasscodeModal({ onSuccess }) {
     else inputRef.current?.focus();
   }, [mobile]);
 
+<<<<<<< HEAD
   const attempt = useCallback(async () => {
     const passcodeId = input.trim();
     if (!passcodeId || busy) return;
@@ -243,6 +255,20 @@ function PasscodeModal({ onSuccess }) {
       setBusy(false);
     }
   }, [busy, input, onSuccess]);
+=======
+  const attempt = useCallback(() => {
+    if (input === PASSCODE) {
+      haptic([8, 24, 8]);
+      onSuccess();
+    } else {
+      haptic([20, 40, 20]);
+      setError('Incorrect passcode');
+      setShake(true);
+      setInput('');
+      setTimeout(() => { setShake(false); setError(''); }, 1400);
+    }
+  }, [input, onSuccess]);
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
 
   const kbAppend = ch => setInput(v => v + ch);
   const kbBack = () => setInput(v => v.slice(0, -1));
@@ -259,7 +285,10 @@ function PasscodeModal({ onSuccess }) {
             value={input}
             onChange={setInput}
             onEnter={attempt}
+<<<<<<< HEAD
             disabled={busy}
+=======
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
             mobile={mobile}
             showKb={showKb}
             setShowKb={setShowKb}
@@ -271,8 +300,13 @@ function PasscodeModal({ onSuccess }) {
 
         {error && <p className="pass-error">{error}</p>}
 
+<<<<<<< HEAD
         <button type="button" className="pass-btn" onClick={() => { haptic(); attempt(); }} disabled={busy}>
           {busy ? 'Verifying' : 'Unlock'}
+=======
+        <button type="button" className="pass-btn" onClick={() => { haptic(); attempt(); }}>
+          Unlock
+>>>>>>> ec42ad395998a2e301d0cec6b4e273bf65e517ef
         </button>
       </div>
 
